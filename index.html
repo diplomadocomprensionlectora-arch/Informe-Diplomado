@@ -166,18 +166,41 @@ function cleanStudentName(name){
 function parseHoja1(table){
   const rows = table.rows.map(r => (r.c || []).map(cellText));
   const students = [];
-  for(let i=1;i<rows.length;i+=2){
+
+  for(let i = 1; i < rows.length; i++){
     const r = rows[i] || [];
-    const next = rows[i+1] || [];
     const name = cleanStudentName(r[0]);
+
     if(!name) continue;
-    const diag = diagnosticStatus(r[1], next[1]);
-    const modelo = hasParticipation(r[2], next[2]);
-    const mapa = hasParticipation(r[3], next[3]);
-    const conociendonos = hasParticipation(r[4], next[4]);
+
+    const next = rows[i + 1] || [];
+    const nextName = cleanStudentName(next[0]);
+
+    // Solo usa la siguiente fila como marcador si NO tiene nombre de estudiante
+    const useNextAsMarker = !nextName && next.some((v, idx) => idx > 0 && normalize(v));
+
+    const markerRow = useNextAsMarker ? next : [];
+
+    const diag = diagnosticStatus(r[1], markerRow[1]);
+    const modelo = hasParticipation(r[2], markerRow[2]);
+    const mapa = hasParticipation(r[3], markerRow[3]);
+    const conociendonos = hasParticipation(r[4], markerRow[4]);
+
     const general = diag !== 'Pendiente' || modelo || mapa || conociendonos;
-    students.push({name, diag, modelo, mapa, conociendonos, general});
+
+    students.push({
+      name,
+      diag,
+      modelo,
+      mapa,
+      conociendonos,
+      general
+    });
+
+    // Si realmente la siguiente fila era solo marcador, la saltamos
+    if(useNextAsMarker) i++;
   }
+
   return students;
 }
 function parseCalificaciones(table){
