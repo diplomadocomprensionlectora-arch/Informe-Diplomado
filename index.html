@@ -134,163 +134,156 @@ function normalize(value){
     .trim();
 }
 
-function escapeHtml(str){
-  return String(str).replace(/[&<>'"]/g, c => ({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    "'":'&#39;',
-    '"':'&quot;'
-  }[c]));
+function normalizeLower(value){
+  return normalize(value).toLowerCase();
 }
 
 function cleanStudentName(name){
   const n = normalize(name);
+  const l = n.toLowerCase();
+
   if(!n) return '';
-
-  const lower = n.toLowerCase();
-
-  const blocked = [
-    'estudiante',
-    'student',
-    'username',
-    'usuario',
-    'nombre',
-    'diagnóstico',
-    'diagnostico',
-    'resultados por página',
-    'resultados por pagina',
-    'total',
-    'promedio',
-    'actividad',
-    'calificaciones'
-  ];
-
-  if(blocked.some(word => lower.startsWith(word))) return '';
+  if(l === 'estudiante') return '';
+  if(l === 'student') return '';
+  if(l === 'usuario') return '';
+  if(l === 'username') return '';
+  if(l === 'nombre') return '';
+  if(l.startsWith('resultados por página')) return '';
+  if(l.startsWith('resultados por pagina')) return '';
+  if(l.startsWith('total')) return '';
+  if(l.startsWith('promedio')) return '';
+  if(l.startsWith('media')) return '';
+  if(l.startsWith('máximo')) return '';
+  if(l.startsWith('maximo')) return '';
+  if(l.startsWith('mínimo')) return '';
+  if(l.startsWith('minimo')) return '';
+  if(l.includes('categoría')) return '';
+  if(l.includes('categoria')) return '';
+  if(l.includes('elemento de calificación')) return '';
+  if(l.includes('elemento de calificacion')) return '';
 
   return n;
 }
 
-function looksLikeStudentName(name){
-  const n = cleanStudentName(name);
-  if(!n) return false;
-
-  // En esta base los estudiantes vienen como "Apellido, Nombre".
-  // Este filtro evita que se cuelen filas técnicas, encabezados o totales.
-  if(n.includes(',')) return true;
-
-  // Respaldo por si algún nombre viene sin coma.
-  const lower = n.toLowerCase();
-  if(/diagn[oó]stico|modelo|mapa|diplomado|comprensi[oó]n|lectura|total|promedio|avance|actividad|fecha|actualizaci[oó]n/.test(lower)) {
-    return false;
-  }
-
-  return /^[a-záéíóúñü]+(?:\s+[a-záéíóúñü]+){1,}$/i.test(n);
-}
-
-function hasScore(value){
+function isScore(value){
   const s = normalize(value);
   if(!s) return false;
-  if(/^[-–—]$/.test(s)) return false;
 
-  // Detecta formatos como: 15 / 15, 100% - 4 / 5, 80% - 3/5
-  const scoreMatch = s.match(/(-?\d+(?:[\.,]\d+)?)\s*\/\s*(-?\d+(?:[\.,]\d+)?)/);
-  if(scoreMatch){
-    const obtained = Number(scoreMatch[1].replace(',', '.'));
-    return Number.isFinite(obtained) && obtained > 0;
+  // Reconoce formatos como:
+  // 15 / 15, 100%
+  // 4 / 5, 80%
+  // 3/5, 60%
+  // 14 / 15
+  if(/^\d+(?:[\.,]\d+)?\s*\/\s*\d+(?:[\.,]\d+)?(?:\s*,\s*\d+(?:[\.,]\d+)?\s*%)?$/i.test(s)){
+    return true;
   }
 
-  // Detecta valores numéricos sueltos positivos: 1, 4, 5, 80, etc.
-  const numeric = Number(s.replace('%', '').replace(',', '.'));
-  return Number.isFinite(numeric) && numeric > 0;
+  return false;
 }
 
-function hasParticipation(...values){
-  return values.some(value => {
-    const s = normalize(value).toLowerCase();
-    if(!s) return false;
+function numericScore(value){
+  const s = normalize(value);
+  const m = s.match(/^(\d+(?:[\.,]\d+)?)\s*\/\s*(\d+(?:[\.,]\d+)?)/);
+  if(!m) return null;
+  return Number(m[1].replace(',', '.'));
+}
 
-    return (
-      hasScore(s) ||
-      s === '1' ||
-      s === '1.0' ||
-      s.includes('javascript:void') ||
-      s.includes('#value') ||
-      s.includes('particip') ||
-      s.includes('enviado') ||
-      s.includes('completado') ||
-      s.includes('respondido') ||
-      s.includes('calificado')
-    );
-  });
+function hasMarker(value){
+  const s = normalizeLower(value);
+  if(!s) return false;
+
+  return (
+    s === '1' ||
+    s === '1.0' ||
+    s === 'sí' ||
+    s === 'si' ||
+    s === 'x' ||
+    s === 'ok' ||
+    s.includes('javascript:void') ||
+    s.includes('#value') ||
+    s.includes('particip') ||
+    s.includes('enviado') ||
+    s.includes('entregado') ||
+    s.includes('completado') ||
+    s.includes('realizado') ||
+    s.includes('respondido')
+  );
+}
+
+function hasParticipation(value){
+  const s = normalize(value);
+  if(!s) return false;
+
+  if(isScore(s)) return true;
+  if(hasMarker(s)) return true;
+
+  // Si llega como número simple mayor que 1, también se interpreta como nota registrada.
+  const n = Number(s.replace(',', '.'));
+  return Number.isFinite(n) && n > 1;
 }
 
 function diagnosticStatus(value){
   const s = normalize(value);
   if(!s) return 'Pendiente';
 
-  // Si hay nota tipo 15 / 15, 100%, se considera calificado.
-  if(hasScore(s)) return 'Calificado';
+  // Si ya tiene nota en formato 15 / 15, 100%, está calificado.
+  if(isScore(s)) return 'Calificado';
 
-  // Si hay algún marcador de envío sin nota, se considera enviado sin calificar.
-  if(hasParticipation(s)) return 'Enviado sin calificar';
+  // Antes se usaba 1 para indicar enviado sin calificar.
+  if(hasMarker(s)) return 'Enviado sin calificar';
+
+  const n = Number(s.replace(',', '.'));
+  if(Number.isFinite(n) && n > 1) return 'Calificado';
 
   return 'Pendiente';
-}
-
-function mergeDiagnostic(a, b){
-  const priority = {
-    'Pendiente': 0,
-    'Enviado sin calificar': 1,
-    'Calificado': 2
-  };
-  return priority[b] > priority[a] ? b : a;
 }
 
 function parseMod1(table){
   const rows = table.rows.map(r => (r.c || []).map(cellText));
   const students = [];
-  const seen = new Map();
+  const seen = new Set();
 
-  rows.forEach(r => {
+  rows.forEach((r) => {
     const name = cleanStudentName(r[0]);
-    if(!looksLikeStudentName(name)) return;
+    if(!name) return;
 
-    const student = {
+    // Evita duplicados si Google Sheets entrega alguna fila repetida.
+    const key = name.toLowerCase();
+    if(seen.has(key)) return;
+    seen.add(key);
+
+    // Columnas exactas de MOD 1 según tu hoja:
+    // A = Estudiante
+    // B = Diagnóstico
+    // C = ¿Qué modelo estás usando en tu aula?
+    // D = Mapa de prácticas letradas
+    // E = Iniciemos nuestro Diplomado...
+    const diagnosticValue = r[1];
+    const modeloValue = r[2];
+    const mapaValue = r[3];
+    const conociendonosValue = r[4];
+
+    const diag = diagnosticStatus(diagnosticValue);
+    const modelo = hasParticipation(modeloValue);
+    const mapa = hasParticipation(mapaValue);
+    const conociendonos = hasParticipation(conociendonosValue);
+    const general = diag !== 'Pendiente' || modelo || mapa || conociendonos;
+
+    students.push({
       name,
-      diag: diagnosticStatus(r[1]),
-      modelo: hasParticipation(r[2]),
-      mapa: hasParticipation(r[3]),
-      conociendonos: hasParticipation(r[4]),
-      general: false
-    };
-
-    student.general =
-      student.diag !== 'Pendiente' ||
-      student.modelo ||
-      student.mapa ||
-      student.conociendonos;
-
-    const key = normalize(name).toLowerCase();
-
-    if(seen.has(key)){
-      const existing = seen.get(key);
-      existing.diag = mergeDiagnostic(existing.diag, student.diag);
-      existing.modelo = existing.modelo || student.modelo;
-      existing.mapa = existing.mapa || student.mapa;
-      existing.conociendonos = existing.conociendonos || student.conociendonos;
-      existing.general = existing.diag !== 'Pendiente' || existing.modelo || existing.mapa || existing.conociendonos;
-    } else {
-      seen.set(key, student);
-      students.push(student);
-    }
+      diag,
+      modelo,
+      mapa,
+      conociendonos,
+      general,
+      raw: {
+        diagnostico: normalize(diagnosticValue),
+        modelo: normalize(modeloValue),
+        mapa: normalize(mapaValue),
+        conociendonos: normalize(conociendonosValue)
+      }
+    });
   });
-
-  // Si Google Sheets entrega filas extra al final, se limita a la base esperada.
-  // Esto no afecta los cálculos cuando la base ya trae exactamente 77 estudiantes.
-  if(students.length > EXPECTED_TOTAL){
-    return students.slice(0, EXPECTED_TOTAL);
-  }
 
   return students;
 }
@@ -301,6 +294,16 @@ function percent(count,total){
 
 function tag(text, cls){
   return `<span class="tag ${cls}">${text}</span>`;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>'"]/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[c]));
 }
 
 function render(students, sheetName){
@@ -368,7 +371,7 @@ function render(students, sheetName){
 
   if(total !== EXPECTED_TOTAL){
     setStatus(
-      `Informe actualizado desde la hoja “${sheetName}”, pero se leyeron ${total} estudiantes y la base esperada es de ${EXPECTED_TOTAL}. Revisa si hay filas adicionales, ocultas o sin el formato Apellido, Nombre. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
+      `Informe actualizado desde la hoja “${sheetName}”. Se leyeron ${total} registros. Esperabas ${EXPECTED_TOTAL}; revisa si hay filas adicionales o usuarios que no son estudiantes. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
       'error'
     );
   } else {
@@ -382,15 +385,12 @@ function render(students, sheetName){
 window.__handleSheet = function(response){
   if(response && response.status === 'ok' && response.table){
     const students = parseMod1(response.table);
-
-    if(students.length > 0){
-      render(students, SHEET_NAME);
-      return;
-    }
+    render(students, SHEET_NAME);
+    return;
   }
 
   setStatus(
-    'No fue posible leer datos válidos desde la hoja “MOD 1”. Revisa que la pestaña exista exactamente con ese nombre, que el archivo esté publicado o compartido, y que los estudiantes estén en la columna A.',
+    'No fue posible leer la hoja “MOD 1”. Revisa que el archivo de Google Sheets esté publicado en la web y que la pestaña se llame exactamente “MOD 1”.',
     'error'
   );
 
@@ -404,14 +404,13 @@ function loadSheet(){
   setStatus('Cargando datos desde la hoja “' + SHEET_NAME + '”…');
 
   const script = document.createElement('script');
-  const query = encodeURIComponent('select A,B,C,D,E');
+  const query = encodeURIComponent('select A, B, C, D, E');
 
   script.src =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
     `?tqx=responseHandler:__handleSheet` +
     `&sheet=${encodeURIComponent(SHEET_NAME)}` +
     `&tq=${query}` +
-    `&headers=1` +
     `&t=${Date.now()}`;
 
   script.onerror = function(){
@@ -425,7 +424,10 @@ function loadSheet(){
   document.body.appendChild(script);
 }
 
-document.getElementById('reloadBtn').addEventListener('click', loadSheet);
+document.getElementById('reloadBtn').addEventListener('click', () => {
+  loadSheet();
+});
+
 loadSheet();
 </script>
 </body>
