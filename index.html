@@ -64,7 +64,7 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
   <div class="grid top-grid" aria-label="Resumen general">
     <div class="metric"><div class="num" id="totalStudents">—</div><div class="label">Total estudiantes</div><div class="sub">Base de seguimiento activa</div></div>
     <div class="metric"><div class="num" id="generalParticipationPct">—</div><div class="label">Participación general</div><div class="sub"><span id="generalParticipationCount">—</span> estudiantes con al menos una participación</div></div>
-    <div class="metric"><div class="num" id="diagnosticPct">—</div><div class="label">Avance en Diagnóstico</div><div class="sub"><span id="diagnosticParticipationCount">—</span> estudiantes entre calificados y enviados</div></div>
+    <div class="metric"><div class="num" id="diagnosticPct">—</div><div class="label">Avance en Diagnóstico</div><div class="sub"><span id="diagnosticParticipationCount">—</span> estudiantes con diagnóstico calificado</div></div>
   </div>
 
   <section class="section">
@@ -74,8 +74,8 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
     </div>
     <div class="grid diag-grid">
       <div class="mini-card calificado"><div class="value" id="diagCalificado">—</div><div class="name">Calificados</div></div>
-      <div class="mini-card enviado"><div class="value" id="diagEnviado">—</div><div class="name">Enviados sin calificar</div></div>
-      <div class="mini-card pendiente"><div class="value" id="diagPendiente">—</div><div class="name">Pendientes</div></div>
+      <div class="mini-card enviado"><div class="value" id="diagEnviado">—</div><div class="name">Pendientes</div></div>
+      <div class="mini-card pendiente"><div class="value" id="diagPendiente">—</div><div class="name">Sin participación</div></div>
     </div>
   </section>
 
@@ -95,7 +95,7 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
   <section class="section">
     <div class="section-title">
       <h2>Seguimiento por estudiante</h2>
-      <span class="pill">Sin columnas de puntaje ni %</span>
+      <span class="pill">Estado por actividad</span>
     </div>
     <div class="table-wrap">
       <table>
@@ -128,172 +128,7 @@ function cellText(cell){
 }
 
 function normalize(value){
-  return String(value || '')
-    .replace(/\u00a0/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function normalizeLower(value){
-  return normalize(value).toLowerCase();
-}
-
-function cleanStudentName(name){
-  const n = normalize(name);
-  const l = n.toLowerCase();
-
-  if(!n) return '';
-  if(l === 'estudiante') return '';
-  if(l === 'student') return '';
-  if(l === 'usuario') return '';
-  if(l === 'username') return '';
-  if(l === 'nombre') return '';
-  if(l.startsWith('resultados por página')) return '';
-  if(l.startsWith('resultados por pagina')) return '';
-  if(l.startsWith('total')) return '';
-  if(l.startsWith('promedio')) return '';
-  if(l.startsWith('media')) return '';
-  if(l.startsWith('máximo')) return '';
-  if(l.startsWith('maximo')) return '';
-  if(l.startsWith('mínimo')) return '';
-  if(l.startsWith('minimo')) return '';
-  if(l.includes('categoría')) return '';
-  if(l.includes('categoria')) return '';
-  if(l.includes('elemento de calificación')) return '';
-  if(l.includes('elemento de calificacion')) return '';
-
-  return n;
-}
-
-function isScore(value){
-  const s = normalize(value);
-  if(!s) return false;
-
-  // Reconoce formatos como:
-  // 15 / 15, 100%
-  // 4 / 5, 80%
-  // 3/5, 60%
-  // 14 / 15
-  if(/^\d+(?:[\.,]\d+)?\s*\/\s*\d+(?:[\.,]\d+)?(?:\s*,\s*\d+(?:[\.,]\d+)?\s*%)?$/i.test(s)){
-    return true;
-  }
-
-  return false;
-}
-
-function numericScore(value){
-  const s = normalize(value);
-  const m = s.match(/^(\d+(?:[\.,]\d+)?)\s*\/\s*(\d+(?:[\.,]\d+)?)/);
-  if(!m) return null;
-  return Number(m[1].replace(',', '.'));
-}
-
-function hasMarker(value){
-  const s = normalizeLower(value);
-  if(!s) return false;
-
-  return (
-    s === '1' ||
-    s === '1.0' ||
-    s === 'sí' ||
-    s === 'si' ||
-    s === 'x' ||
-    s === 'ok' ||
-    s.includes('javascript:void') ||
-    s.includes('#value') ||
-    s.includes('particip') ||
-    s.includes('enviado') ||
-    s.includes('entregado') ||
-    s.includes('completado') ||
-    s.includes('realizado') ||
-    s.includes('respondido')
-  );
-}
-
-function hasParticipation(value){
-  const s = normalize(value);
-  if(!s) return false;
-
-  if(isScore(s)) return true;
-  if(hasMarker(s)) return true;
-
-  // Si llega como número simple mayor que 1, también se interpreta como nota registrada.
-  const n = Number(s.replace(',', '.'));
-  return Number.isFinite(n) && n > 1;
-}
-
-function diagnosticStatus(value){
-  const s = normalize(value);
-  if(!s) return 'Pendiente';
-
-  // Si ya tiene nota en formato 15 / 15, 100%, está calificado.
-  if(isScore(s)) return 'Calificado';
-
-  // Antes se usaba 1 para indicar enviado sin calificar.
-  if(hasMarker(s)) return 'Enviado sin calificar';
-
-  const n = Number(s.replace(',', '.'));
-  if(Number.isFinite(n) && n > 1) return 'Calificado';
-
-  return 'Pendiente';
-}
-
-function parseMod1(table){
-  const rows = table.rows.map(r => (r.c || []).map(cellText));
-  const students = [];
-  const seen = new Set();
-
-  rows.forEach((r) => {
-    const name = cleanStudentName(r[0]);
-    if(!name) return;
-
-    // Evita duplicados si Google Sheets entrega alguna fila repetida.
-    const key = name.toLowerCase();
-    if(seen.has(key)) return;
-    seen.add(key);
-
-    // Columnas exactas de MOD 1 según tu hoja:
-    // A = Estudiante
-    // B = Diagnóstico
-    // C = ¿Qué modelo estás usando en tu aula?
-    // D = Mapa de prácticas letradas
-    // E = Iniciemos nuestro Diplomado...
-    const diagnosticValue = r[1];
-    const modeloValue = r[2];
-    const mapaValue = r[3];
-    const conociendonosValue = r[4];
-
-    const diag = diagnosticStatus(diagnosticValue);
-    const modelo = hasParticipation(modeloValue);
-    const mapa = hasParticipation(mapaValue);
-    const conociendonos = hasParticipation(conociendonosValue);
-    const general = diag !== 'Pendiente' || modelo || mapa || conociendonos;
-
-    students.push({
-      name,
-      diag,
-      modelo,
-      mapa,
-      conociendonos,
-      general,
-      raw: {
-        diagnostico: normalize(diagnosticValue),
-        modelo: normalize(modeloValue),
-        mapa: normalize(mapaValue),
-        conociendonos: normalize(conociendonosValue)
-      }
-    });
-  });
-
-  return students;
-}
-
-function percent(count,total){
-  return total ? Math.round((count / total) * 100) : 0;
-}
-
-function tag(text, cls){
-  return `<span class="tag ${cls}">${text}</span>`;
+  return String(value || '').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
 }
 
 function escapeHtml(str){
@@ -306,96 +141,217 @@ function escapeHtml(str){
   }[c]));
 }
 
+function percent(count,total){
+  return total ? Math.round((count / total) * 100) : 0;
+}
+
+function tag(text, cls){
+  return `<span class="tag ${cls}">${text}</span>`;
+}
+
+function cleanStudentName(name){
+  const n = normalize(name);
+  if(!n) return '';
+
+  const lower = n.toLowerCase();
+
+  if(lower === 'estudiante') return '';
+  if(lower === 'student') return '';
+  if(lower === 'username') return '';
+  if(lower === 'usuario') return '';
+  if(lower === 'nombre') return '';
+  if(lower.startsWith('resultados por página')) return '';
+  if(lower.startsWith('promedio')) return '';
+  if(lower.startsWith('total')) return '';
+  if(lower.startsWith('máximo') || lower.startsWith('maximo')) return '';
+  if(lower.startsWith('mínimo') || lower.startsWith('minimo')) return '';
+  if(lower.includes('calificación final') || lower.includes('calificacion final')) return '';
+
+  // En esta exportación los estudiantes vienen en formato: Apellido, Nombre.
+  // Este filtro evita contar filas técnicas de Brightspace o totales como estudiantes.
+  if(!n.includes(',')) return '';
+
+  return n;
+}
+
+function isOnePending(value){
+  const s = normalize(value).toLowerCase().replace(/\s/g,'');
+  return s === '1' || s === '1.0' || s === '1,0';
+}
+
+function isGrade(value){
+  const s = normalize(value);
+  if(!s) return false;
+  if(isOnePending(s)) return false;
+
+  // Reconoce notas como: 15 / 15, 100% | 14 / 15, 93.33% | 4 / 5, 80% | 3 / 5, 60%
+  if(/\d+(?:[\.,]\d+)?\s*\/\s*\d+(?:[\.,]\d+)?/.test(s)) return true;
+
+  // Reconoce porcentajes o notas numéricas distintas de 1, por si Google Sheets entrega solo el valor formateado.
+  if(/^\d+(?:[\.,]\d+)?\s*%$/.test(s)) return true;
+
+  const n = Number(s.replace(',', '.'));
+  return Number.isFinite(n) && n > 1;
+}
+
+function classifyCell(value){
+  const s = normalize(value);
+  const lower = s.toLowerCase();
+
+  if(!s){
+    return { text:'Sin participación', cls:'no', order:0 };
+  }
+
+  // Regla solicitada: si aparece 1, queda como pendiente.
+  if(isOnePending(s)){
+    return { text:'Pendiente', cls:'warn', order:1 };
+  }
+
+  // Regla solicitada: si tiene nota, queda como calificado.
+  if(isGrade(s)){
+    return { text:'Calificado', cls:'ok', order:2 };
+  }
+
+  // Marcadores antiguos de entrega sin calificar: se mantienen como pendiente.
+  if(lower.includes('javascript:void') || lower.includes('#value') || lower.includes('particip') || lower.includes('enviado')){
+    return { text:'Pendiente', cls:'warn', order:1 };
+  }
+
+  // Cualquier contenido no vacío que no sea nota se marca como pendiente para no contarlo como calificado por error.
+  return { text:'Pendiente', cls:'warn', order:1 };
+}
+
+function parseMod1(table){
+  const rows = table.rows.map(r => (r.c || []).map(cellText));
+  const students = [];
+  const seen = new Set();
+
+  rows.forEach(r => {
+    const name = cleanStudentName(r[0]);
+    if(!name) return;
+
+    const key = name.toLowerCase();
+    if(seen.has(key)) return;
+    seen.add(key);
+
+    const diagnostico = classifyCell(r[1]);
+    const modelo = classifyCell(r[2]);
+    const mapa = classifyCell(r[3]);
+    const conociendonos = classifyCell(r[4]);
+
+    const statuses = [diagnostico, modelo, mapa, conociendonos];
+    const hasCalificado = statuses.some(s => s.text === 'Calificado');
+    const hasPendiente = statuses.some(s => s.text === 'Pendiente');
+    const hasAnyActivity = statuses.some(s => s.text !== 'Sin participación');
+
+    let generalText = 'Sin participación';
+    let generalCls = 'no';
+
+    if(hasCalificado){
+      generalText = 'Con calificación';
+      generalCls = 'ok';
+    } else if(hasPendiente){
+      generalText = 'Pendiente';
+      generalCls = 'warn';
+    } else if(hasAnyActivity){
+      generalText = 'Con participación';
+      generalCls = 'ok';
+    }
+
+    students.push({
+      name,
+      diagnostico,
+      modelo,
+      mapa,
+      conociendonos,
+      generalText,
+      generalCls
+    });
+  });
+
+  return students;
+}
+
+function countStatus(students, field, text){
+  return students.filter(s => s[field].text === text).length;
+}
+
 function render(students, sheetName){
   const total = students.length;
 
-  const diagCalificado = students.filter(s => s.diag === 'Calificado').length;
-  const diagEnviado = students.filter(s => s.diag === 'Enviado sin calificar').length;
-  const diagPendiente = students.filter(s => s.diag === 'Pendiente').length;
-  const diagParticipacion = diagCalificado + diagEnviado;
+  const diagCalificado = countStatus(students, 'diagnostico', 'Calificado');
+  const diagPendiente = countStatus(students, 'diagnostico', 'Pendiente');
+  const diagSinParticipacion = countStatus(students, 'diagnostico', 'Sin participación');
 
-  const modelo = students.filter(s => s.modelo).length;
-  const mapa = students.filter(s => s.mapa).length;
-  const conociendonos = students.filter(s => s.conociendonos).length;
-  const general = students.filter(s => s.general).length;
-  const sinParticipacion = total - general;
+  const generalConRegistro = students.filter(s => s.generalText !== 'Sin participación').length;
+  const generalSinParticipacion = total - generalConRegistro;
 
   document.getElementById('totalStudents').textContent = total;
-  document.getElementById('generalParticipationPct').textContent = percent(general,total) + '%';
-  document.getElementById('generalParticipationCount').textContent = `${general} de ${total}`;
-  document.getElementById('diagnosticPct').textContent = percent(diagParticipacion,total) + '%';
-  document.getElementById('diagnosticParticipationCount').textContent = `${diagParticipacion} de ${total}`;
+  document.getElementById('generalParticipationPct').textContent = percent(generalConRegistro,total) + '%';
+  document.getElementById('generalParticipationCount').textContent = `${generalConRegistro} de ${total}`;
+
+  document.getElementById('diagnosticPct').textContent = percent(diagCalificado,total) + '%';
+  document.getElementById('diagnosticParticipationCount').textContent = `${diagCalificado} de ${total}`;
 
   document.getElementById('diagCalificado').textContent = diagCalificado;
-  document.getElementById('diagEnviado').textContent = diagEnviado;
-  document.getElementById('diagPendiente').textContent = diagPendiente;
+  document.getElementById('diagEnviado').textContent = diagPendiente;
+  document.getElementById('diagPendiente').textContent = diagSinParticipacion;
 
   const activities = [
-    ['Diagnostico', diagParticipacion],
-    ['Modelo', modelo],
-    ['Mapa', mapa],
-    ['Conociendonos', conociendonos]
+    ['Diagnostico', 'diagnostico'],
+    ['Modelo', 'modelo'],
+    ['Mapa', 'mapa'],
+    ['Conociendonos', 'conociendonos']
   ];
 
-  activities.forEach(([id,count]) => {
-    const pct = percent(count,total);
-    document.getElementById('act' + id).textContent = count;
+  activities.forEach(([id, field]) => {
+    const calificados = countStatus(students, field, 'Calificado');
+    const pendientes = countStatus(students, field, 'Pendiente');
+    const sin = countStatus(students, field, 'Sin participación');
+    const pct = percent(calificados,total);
+
+    document.getElementById('act' + id).textContent = calificados;
     document.getElementById('bar' + id).style.width = pct + '%';
-    document.getElementById('cap' + id).textContent = `${pct}% de avance (${count} de ${total})`;
+    document.getElementById('cap' + id).textContent = `${pct}% calificado (${calificados} de ${total}) · Pendientes: ${pendientes} · Sin participación: ${sin}`;
   });
 
   const tbody = document.getElementById('studentsBody');
-
-  tbody.innerHTML = students.map(s => {
-    const diagTag =
-      s.diag === 'Calificado'
-        ? tag('Calificado','ok')
-        : s.diag === 'Enviado sin calificar'
-          ? tag('Enviado sin calificar','warn')
-          : tag('Pendiente','no');
-
-    return `
-      <tr>
-        <td>${escapeHtml(s.name)}</td>
-        <td>${diagTag}</td>
-        <td>${s.modelo ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
-        <td>${s.mapa ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
-        <td>${s.conociendonos ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
-        <td>${s.general ? tag('Con participación','ok') : tag('Sin participación','no')}</td>
-      </tr>
-    `;
-  }).join('');
+  tbody.innerHTML = students.map(s => `
+    <tr>
+      <td>${escapeHtml(s.name)}</td>
+      <td>${tag(s.diagnostico.text, s.diagnostico.cls)}</td>
+      <td>${tag(s.modelo.text, s.modelo.cls)}</td>
+      <td>${tag(s.mapa.text, s.mapa.cls)}</td>
+      <td>${tag(s.conociendonos.text, s.conociendonos.cls)}</td>
+      <td>${tag(s.generalText, s.generalCls)}</td>
+    </tr>
+  `).join('');
 
   const now = new Date();
   document.getElementById('lastUpdated').textContent = 'Actualización: ' + now.toLocaleString('es-CO');
 
-  if(total !== EXPECTED_TOTAL){
-    setStatus(
-      `Informe actualizado desde la hoja “${sheetName}”. Se leyeron ${total} registros. Esperabas ${EXPECTED_TOTAL}; revisa si hay filas adicionales o usuarios que no son estudiantes. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
-      'error'
-    );
-  } else {
-    setStatus(
-      `Informe actualizado correctamente desde la hoja “${sheetName}”. Total estudiantes: ${total}. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
-      'ok'
-    );
-  }
+  const totalNote = total === EXPECTED_TOTAL
+    ? `Total validado: ${total} estudiantes.`
+    : `Atención: se leyeron ${total} registros; el esperado es ${EXPECTED_TOTAL}. Revisa si hay filas adicionales o estudiantes sin coma en el nombre.`;
+
+  setStatus(
+    `Informe actualizado correctamente desde la hoja “${sheetName}”. ${totalNote} Con registro: ${generalConRegistro}; sin participación general: ${generalSinParticipacion}.`,
+    total === EXPECTED_TOTAL ? 'ok' : 'error'
+  );
 }
 
 window.__handleSheet = function(response){
   if(response && response.status === 'ok' && response.table){
     const students = parseMod1(response.table);
-    render(students, SHEET_NAME);
-    return;
+
+    if(students.length > 0){
+      render(students, SHEET_NAME);
+      return;
+    }
   }
 
-  setStatus(
-    'No fue posible leer la hoja “MOD 1”. Revisa que el archivo de Google Sheets esté publicado en la web y que la pestaña se llame exactamente “MOD 1”.',
-    'error'
-  );
-
-  document.getElementById('studentsBody').innerHTML =
-    '<tr><td colspan="6">No se pudieron cargar los datos.</td></tr>';
+  setStatus('No fue posible leer la hoja “MOD 1”. Revisa que el archivo esté publicado en la web y que la pestaña se llame exactamente MOD 1.', 'error');
+  document.getElementById('studentsBody').innerHTML = '<tr><td colspan="6">No se pudieron cargar los datos.</td></tr>';
 };
 
 function loadSheet(){
@@ -410,24 +366,19 @@ function loadSheet(){
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
     `?tqx=responseHandler:__handleSheet` +
     `&sheet=${encodeURIComponent(SHEET_NAME)}` +
+    `&headers=1` +
     `&tq=${query}` +
     `&t=${Date.now()}`;
 
   script.onerror = function(){
-    setStatus(
-      'No se pudo conectar con Google Sheets. Revisa permisos de publicación, el nombre exacto de la hoja “MOD 1” y la conexión a internet.',
-      'error'
-    );
+    setStatus('No se pudo conectar con Google Sheets. Revisa permisos de publicación y conexión a internet.', 'error');
   };
 
   currentScript = script;
   document.body.appendChild(script);
 }
 
-document.getElementById('reloadBtn').addEventListener('click', () => {
-  loadSheet();
-});
-
+document.getElementById('reloadBtn').addEventListener('click', loadSheet);
 loadSheet();
 </script>
 </body>
