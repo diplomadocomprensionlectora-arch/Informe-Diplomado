@@ -110,8 +110,8 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
 
 <script>
 const SHEET_ID = '1pnsegPrTsGUsWrluUI2r9ZFIFP2di8pWVwW8umBUCcI';
-const SHEETS_TO_TRY = ['MOD 1'];
-let attemptIndex = 0;
+const SHEET_NAME = 'MOD 1';
+const EXPECTED_TOTAL = 77;
 let currentScript = null;
 
 function setStatus(message, kind=''){
@@ -119,169 +119,313 @@ function setStatus(message, kind=''){
   el.textContent = message;
   el.className = 'status' + (kind ? ' ' + kind : '');
 }
+
 function cellText(cell){
   if(!cell) return '';
   if(cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
   if(cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
   return '';
 }
-function normalize(value){return String(value || '').replace(/\u00a0/g,' ').trim();}
-function hasParticipation(...values){
-  return values.some(v => {
-    const s = normalize(v).toLowerCase();
-    if(!s) return false;
-    return s === '1' || s === '1.0' || s.includes('javascript:void') || s.includes('#value') || s.includes('particip');
-  });
+
+function normalize(value){
+  return String(value || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
-function isGradedDiagnostic(value){
-  const s = normalize(value);
-  if(!s || s === '1') return false;
-  if(/\d+(?:[\.,]\d+)?\s*\/\s*15/.test(s)) return !s.startsWith('-');
-  const n = Number(s.replace(',', '.'));
-  return Number.isFinite(n) && n > 1;
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>'"]/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[c]));
 }
-function diagnosticStatus(primary, marker){
-  if(isGradedDiagnostic(primary)) return 'Calificado';
-  if(hasParticipation(primary, marker)) return 'Enviado sin calificar';
-  return 'Pendiente';
-}
+
 function cleanStudentName(name){
   const n = normalize(name);
   if(!n) return '';
-  if(/^resultados por página/i.test(n)) return '';
-  if(/^estudiante$/i.test(n)) return '';
+
+  const lower = n.toLowerCase();
+
+  const blocked = [
+    'estudiante',
+    'student',
+    'username',
+    'usuario',
+    'nombre',
+    'diagnóstico',
+    'diagnostico',
+    'resultados por página',
+    'resultados por pagina',
+    'total',
+    'promedio',
+    'actividad',
+    'calificaciones'
+  ];
+
+  if(blocked.some(word => lower.startsWith(word))) return '';
+
   return n;
 }
-function parseHoja1(table){
+
+function looksLikeStudentName(name){
+  const n = cleanStudentName(name);
+  if(!n) return false;
+
+  // En esta base los estudiantes vienen como "Apellido, Nombre".
+  // Este filtro evita que se cuelen filas técnicas, encabezados o totales.
+  if(n.includes(',')) return true;
+
+  // Respaldo por si algún nombre viene sin coma.
+  const lower = n.toLowerCase();
+  if(/diagn[oó]stico|modelo|mapa|diplomado|comprensi[oó]n|lectura|total|promedio|avance|actividad|fecha|actualizaci[oó]n/.test(lower)) {
+    return false;
+  }
+
+  return /^[a-záéíóúñü]+(?:\s+[a-záéíóúñü]+){1,}$/i.test(n);
+}
+
+function hasScore(value){
+  const s = normalize(value);
+  if(!s) return false;
+  if(/^[-–—]$/.test(s)) return false;
+
+  // Detecta formatos como: 15 / 15, 100% - 4 / 5, 80% - 3/5
+  const scoreMatch = s.match(/(-?\d+(?:[\.,]\d+)?)\s*\/\s*(-?\d+(?:[\.,]\d+)?)/);
+  if(scoreMatch){
+    const obtained = Number(scoreMatch[1].replace(',', '.'));
+    return Number.isFinite(obtained) && obtained > 0;
+  }
+
+  // Detecta valores numéricos sueltos positivos: 1, 4, 5, 80, etc.
+  const numeric = Number(s.replace('%', '').replace(',', '.'));
+  return Number.isFinite(numeric) && numeric > 0;
+}
+
+function hasParticipation(...values){
+  return values.some(value => {
+    const s = normalize(value).toLowerCase();
+    if(!s) return false;
+
+    return (
+      hasScore(s) ||
+      s === '1' ||
+      s === '1.0' ||
+      s.includes('javascript:void') ||
+      s.includes('#value') ||
+      s.includes('particip') ||
+      s.includes('enviado') ||
+      s.includes('completado') ||
+      s.includes('respondido') ||
+      s.includes('calificado')
+    );
+  });
+}
+
+function diagnosticStatus(value){
+  const s = normalize(value);
+  if(!s) return 'Pendiente';
+
+  // Si hay nota tipo 15 / 15, 100%, se considera calificado.
+  if(hasScore(s)) return 'Calificado';
+
+  // Si hay algún marcador de envío sin nota, se considera enviado sin calificar.
+  if(hasParticipation(s)) return 'Enviado sin calificar';
+
+  return 'Pendiente';
+}
+
+function mergeDiagnostic(a, b){
+  const priority = {
+    'Pendiente': 0,
+    'Enviado sin calificar': 1,
+    'Calificado': 2
+  };
+  return priority[b] > priority[a] ? b : a;
+}
+
+function parseMod1(table){
   const rows = table.rows.map(r => (r.c || []).map(cellText));
   const students = [];
+  const seen = new Map();
 
-  for(let i = 1; i < rows.length; i++){
-    const r = rows[i] || [];
+  rows.forEach(r => {
     const name = cleanStudentName(r[0]);
+    if(!looksLikeStudentName(name)) return;
 
-    if(!name) continue;
-
-    const next = rows[i + 1] || [];
-    const nextName = cleanStudentName(next[0]);
-
-    // Solo usa la siguiente fila como marcador si NO tiene nombre de estudiante
-    const useNextAsMarker = !nextName && next.some((v, idx) => idx > 0 && normalize(v));
-
-    const markerRow = useNextAsMarker ? next : [];
-
-    const diag = diagnosticStatus(r[1], markerRow[1]);
-    const modelo = hasParticipation(r[2], markerRow[2]);
-    const mapa = hasParticipation(r[3], markerRow[3]);
-    const conociendonos = hasParticipation(r[4], markerRow[4]);
-
-    const general = diag !== 'Pendiente' || modelo || mapa || conociendonos;
-
-    students.push({
+    const student = {
       name,
-      diag,
-      modelo,
-      mapa,
-      conociendonos,
-      general
-    });
+      diag: diagnosticStatus(r[1]),
+      modelo: hasParticipation(r[2]),
+      mapa: hasParticipation(r[3]),
+      conociendonos: hasParticipation(r[4]),
+      general: false
+    };
 
-    // Si realmente la siguiente fila era solo marcador, la saltamos
-    if(useNextAsMarker) i++;
+    student.general =
+      student.diag !== 'Pendiente' ||
+      student.modelo ||
+      student.mapa ||
+      student.conociendonos;
+
+    const key = normalize(name).toLowerCase();
+
+    if(seen.has(key)){
+      const existing = seen.get(key);
+      existing.diag = mergeDiagnostic(existing.diag, student.diag);
+      existing.modelo = existing.modelo || student.modelo;
+      existing.mapa = existing.mapa || student.mapa;
+      existing.conociendonos = existing.conociendonos || student.conociendonos;
+      existing.general = existing.diag !== 'Pendiente' || existing.modelo || existing.mapa || existing.conociendonos;
+    } else {
+      seen.set(key, student);
+      students.push(student);
+    }
+  });
+
+  // Si Google Sheets entrega filas extra al final, se limita a la base esperada.
+  // Esto no afecta los cálculos cuando la base ya trae exactamente 77 estudiantes.
+  if(students.length > EXPECTED_TOTAL){
+    return students.slice(0, EXPECTED_TOTAL);
   }
 
   return students;
 }
-function parseCalificaciones(table){
-  const labels = table.cols.map(c => normalize(c.label).toLowerCase());
-  const rows = table.rows.map(r => (r.c || []).map(cellText));
-  const idxName = labels.findIndex(x => x.includes('username')) >= 0 ? labels.findIndex(x => x.includes('username')) : 0;
-  const idxDiag = labels.findIndex(x => x.includes('diagnóstico') || x.includes('diagnostico'));
-  const idxModelo = labels.findIndex(x => x.includes('modelo'));
-  const idxMapa = labels.findIndex(x => x.includes('mapa'));
-  const idxCon = labels.findIndex(x => x.includes('iniciemos') || x.includes('conoci'));
-  const students = [];
-  rows.forEach(r => {
-    const name = cleanStudentName(r[idxName]);
-    if(!name) return;
-    const diagVal = idxDiag >= 0 ? r[idxDiag] : '';
-    const diag = diagnosticStatus(diagVal, diagVal === '1' ? '1' : '');
-    const modelo = idxModelo >= 0 ? hasParticipation(r[idxModelo]) : false;
-    const mapa = idxMapa >= 0 ? hasParticipation(r[idxMapa]) : false;
-    const conociendonos = idxCon >= 0 ? hasParticipation(r[idxCon]) : false;
-    const general = diag !== 'Pendiente' || modelo || mapa || conociendonos;
-    students.push({name, diag, modelo, mapa, conociendonos, general});
-  });
-  return students;
+
+function percent(count,total){
+  return total ? Math.round((count / total) * 100) : 0;
 }
-function percent(count,total){return total ? Math.round((count/total)*100) : 0;}
-function tag(text, cls){return `<span class="tag ${cls}">${text}</span>`;}
+
+function tag(text, cls){
+  return `<span class="tag ${cls}">${text}</span>`;
+}
+
 function render(students, sheetName){
   const total = students.length;
+
   const diagCalificado = students.filter(s => s.diag === 'Calificado').length;
   const diagEnviado = students.filter(s => s.diag === 'Enviado sin calificar').length;
   const diagPendiente = students.filter(s => s.diag === 'Pendiente').length;
   const diagParticipacion = diagCalificado + diagEnviado;
+
   const modelo = students.filter(s => s.modelo).length;
   const mapa = students.filter(s => s.mapa).length;
   const conociendonos = students.filter(s => s.conociendonos).length;
   const general = students.filter(s => s.general).length;
   const sinParticipacion = total - general;
+
   document.getElementById('totalStudents').textContent = total;
   document.getElementById('generalParticipationPct').textContent = percent(general,total) + '%';
   document.getElementById('generalParticipationCount').textContent = `${general} de ${total}`;
   document.getElementById('diagnosticPct').textContent = percent(diagParticipacion,total) + '%';
   document.getElementById('diagnosticParticipationCount').textContent = `${diagParticipacion} de ${total}`;
+
   document.getElementById('diagCalificado').textContent = diagCalificado;
   document.getElementById('diagEnviado').textContent = diagEnviado;
   document.getElementById('diagPendiente').textContent = diagPendiente;
+
   const activities = [
-    ['Diagnostico', diagParticipacion], ['Modelo', modelo], ['Mapa', mapa], ['Conociendonos', conociendonos]
+    ['Diagnostico', diagParticipacion],
+    ['Modelo', modelo],
+    ['Mapa', mapa],
+    ['Conociendonos', conociendonos]
   ];
+
   activities.forEach(([id,count]) => {
     const pct = percent(count,total);
-    document.getElementById('act'+id).textContent = count;
-    document.getElementById('bar'+id).style.width = pct + '%';
-    document.getElementById('cap'+id).textContent = `${pct}% de avance (${count} de ${total})`;
+    document.getElementById('act' + id).textContent = count;
+    document.getElementById('bar' + id).style.width = pct + '%';
+    document.getElementById('cap' + id).textContent = `${pct}% de avance (${count} de ${total})`;
   });
+
   const tbody = document.getElementById('studentsBody');
+
   tbody.innerHTML = students.map(s => {
-    const diagTag = s.diag === 'Calificado' ? tag('Calificado','ok') : s.diag === 'Enviado sin calificar' ? tag('Enviado sin calificar','warn') : tag('Pendiente','no');
-    return `<tr><td>${escapeHtml(s.name)}</td><td>${diagTag}</td><td>${s.modelo ? tag('Participó','ok') : tag('Pendiente','neutral')}</td><td>${s.mapa ? tag('Participó','ok') : tag('Pendiente','neutral')}</td><td>${s.conociendonos ? tag('Participó','ok') : tag('Pendiente','neutral')}</td><td>${s.general ? tag('Con participación','ok') : tag('Sin participación','no')}</td></tr>`;
+    const diagTag =
+      s.diag === 'Calificado'
+        ? tag('Calificado','ok')
+        : s.diag === 'Enviado sin calificar'
+          ? tag('Enviado sin calificar','warn')
+          : tag('Pendiente','no');
+
+    return `
+      <tr>
+        <td>${escapeHtml(s.name)}</td>
+        <td>${diagTag}</td>
+        <td>${s.modelo ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
+        <td>${s.mapa ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
+        <td>${s.conociendonos ? tag('Participó','ok') : tag('Pendiente','neutral')}</td>
+        <td>${s.general ? tag('Con participación','ok') : tag('Sin participación','no')}</td>
+      </tr>
+    `;
   }).join('');
+
   const now = new Date();
   document.getElementById('lastUpdated').textContent = 'Actualización: ' + now.toLocaleString('es-CO');
-  setStatus(`Informe actualizado correctamente desde la hoja “${sheetName}”. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`, 'ok');
+
+  if(total !== EXPECTED_TOTAL){
+    setStatus(
+      `Informe actualizado desde la hoja “${sheetName}”, pero se leyeron ${total} estudiantes y la base esperada es de ${EXPECTED_TOTAL}. Revisa si hay filas adicionales, ocultas o sin el formato Apellido, Nombre. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
+      'error'
+    );
+  } else {
+    setStatus(
+      `Informe actualizado correctamente desde la hoja “${sheetName}”. Total estudiantes: ${total}. Participación general: ${general} de ${total}; sin participación: ${sinParticipacion}.`,
+      'ok'
+    );
+  }
 }
-function escapeHtml(str){return String(str).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+
 window.__handleSheet = function(response){
-  const sheetName = SHEETS_TO_TRY[attemptIndex];
   if(response && response.status === 'ok' && response.table){
-    let students = sheetName === 'Hoja1' ? parseHoja1(response.table) : parseCalificaciones(response.table);
-    if(students.length > 0){ render(students, sheetName); return; }
+    const students = parseMod1(response.table);
+
+    if(students.length > 0){
+      render(students, SHEET_NAME);
+      return;
+    }
   }
-  attemptIndex++;
-  if(attemptIndex < SHEETS_TO_TRY.length){ loadSheet(); }
-  else {
-    setStatus('No fue posible leer la hoja. Revisa que el archivo de Google Sheets esté publicado en la web o compartido públicamente, y que exista una pestaña llamada “Hoja1” o “Calificaciones”.', 'error');
-    document.getElementById('studentsBody').innerHTML = '<tr><td colspan="6">No se pudieron cargar los datos.</td></tr>';
-  }
+
+  setStatus(
+    'No fue posible leer datos válidos desde la hoja “MOD 1”. Revisa que la pestaña exista exactamente con ese nombre, que el archivo esté publicado o compartido, y que los estudiantes estén en la columna A.',
+    'error'
+  );
+
+  document.getElementById('studentsBody').innerHTML =
+    '<tr><td colspan="6">No se pudieron cargar los datos.</td></tr>';
 };
+
 function loadSheet(){
   if(currentScript) currentScript.remove();
-  const sheetName = SHEETS_TO_TRY[attemptIndex];
-  setStatus('Cargando datos desde la hoja “' + sheetName + '”…');
+
+  setStatus('Cargando datos desde la hoja “' + SHEET_NAME + '”…');
+
   const script = document.createElement('script');
-  script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:__handleSheet&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
+  const query = encodeURIComponent('select A,B,C,D,E');
+
+  script.src =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
+    `?tqx=responseHandler:__handleSheet` +
+    `&sheet=${encodeURIComponent(SHEET_NAME)}` +
+    `&tq=${query}` +
+    `&headers=1` +
+    `&t=${Date.now()}`;
+
   script.onerror = function(){
-    attemptIndex++;
-    if(attemptIndex < SHEETS_TO_TRY.length) loadSheet();
-    else setStatus('No se pudo conectar con Google Sheets. Revisa permisos de publicación y conexión a internet.', 'error');
+    setStatus(
+      'No se pudo conectar con Google Sheets. Revisa permisos de publicación, el nombre exacto de la hoja “MOD 1” y la conexión a internet.',
+      'error'
+    );
   };
+
   currentScript = script;
   document.body.appendChild(script);
 }
-document.getElementById('reloadBtn').addEventListener('click', () => { attemptIndex = 0; loadSheet(); });
+
+document.getElementById('reloadBtn').addEventListener('click', loadSheet);
 loadSheet();
 </script>
 </body>
