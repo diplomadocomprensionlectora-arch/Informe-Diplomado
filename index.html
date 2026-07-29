@@ -27,15 +27,57 @@ body{margin:0;background:var(--cream);font-family:Arial,Helvetica,sans-serif;col
 h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
 .hero p{margin:0;color:#ffe9c8;font-size:16px;max-width:780px}
 .source-card{margin-top:18px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.source-card strong{display:block;color:var(--dark);font-size:15px;margin-bottom:4px}.source-card span{font-size:13px;color:#775943}.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:0;background:var(--orange);color:#fff;font-weight:800;border-radius:12px;padding:11px 16px;box-shadow:0 8px 20px rgba(245,130,32,.22);cursor:pointer}.btn.secondary{background:var(--dark);box-shadow:none}.btn:disabled{opacity:.55;cursor:not-allowed}
-.status{margin-top:12px;padding:12px 14px;border:1px solid var(--border);background:#fff;border-radius:14px;color:#6d4c3a;font-size:14px}.status.error{border-color:#f0b3a0;background:#fff1ea;color:#8a321c}.status.ok{border-color:#b8dfc0;background:#effaf2;color:#2d6537}
-.grid{display:grid;gap:18px}.top-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px}.metric{background:#fff;border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center;box-shadow:0 12px 30px rgba(58,36,23,.08)}.metric .num{font-size:38px;font-weight:900;color:var(--orange);line-height:1}.metric .label{margin-top:8px;font-weight:800;color:var(--dark)}.metric .sub{margin-top:6px;color:#7b5e4a;font-size:13px}
+.source-card strong{display:block;color:var(--dark);font-size:15px;margin-bottom:4px}
+.source-card span{font-size:13px;color:#775943}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.module-control{display:flex;flex-direction:column;gap:5px;min-width:170px}
+.module-control label{font-size:12px;font-weight:900;color:#5d3c28;text-transform:uppercase;letter-spacing:.2px}
+.module-control select{height:42px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--dark);font-weight:800;padding:0 12px;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:0;background:var(--orange);color:#fff;font-weight:800;border-radius:12px;padding:11px 16px;box-shadow:0 8px 20px rgba(245,130,32,.22);cursor:pointer;min-height:42px}
+.btn.secondary{background:var(--dark);box-shadow:none}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.status{margin-top:12px;padding:12px 14px;border:1px solid var(--border);background:#fff;border-radius:14px;color:#6d4c3a;font-size:14px}
+.status.error{border-color:#f0b3a0;background:#fff1ea;color:#8a321c}
+.status.ok{border-color:#b8dfc0;background:#effaf2;color:#2d6537}
+.status.warn{border-color:#ffe0a3;background:#fff8e6;color:#7a4b00}
+.grid{display:grid;gap:18px}
+.top-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px}
+.metric{background:#fff;border:1px solid var(--border);border-radius:20px;padding:22px;text-align:center;box-shadow:0 12px 30px rgba(58,36,23,.08)}
+.metric .num{font-size:38px;font-weight:900;color:var(--orange);line-height:1}
+.metric .label{margin-top:8px;font-weight:800;color:var(--dark)}
+.metric .sub{margin-top:6px;color:#7b5e4a;font-size:13px}
 .section{margin-top:22px;background:#fff;border:1px solid var(--border);border-radius:24px;padding:24px;box-shadow:0 12px 30px rgba(58,36,23,.07)}
-.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--light);padding-bottom:14px;margin-bottom:18px}.section-title h2{margin:0;color:var(--dark);font-size:24px}.pill{background:var(--yellow);color:var(--dark);border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px}.diag-grid{grid-template-columns:repeat(3,minmax(180px,240px));justify-content:center;align-items:stretch}.mini-card{border:1px solid var(--border);border-radius:18px;padding:18px;text-align:center;background:linear-gradient(180deg,#fff,#fffaf1)}.mini-card .value{font-size:32px;font-weight:900;color:var(--dark)}.mini-card .name{font-weight:900;color:#5d3c28}.mini-card.calificado{border-top:6px solid var(--green)}.mini-card.enviado{border-top:6px solid var(--orange)}.mini-card.pendiente{border-top:6px solid var(--red)}
-.legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--light);border:1px solid #f1d7aa;border-radius:18px;padding:14px 16px;margin-top:18px}.legend-icon{width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid #e9d2af}.dot{width:8px;height:8px;background:var(--orange);border-radius:50%;display:inline-block;margin-left:-6px;margin-top:-12px}.speech{font-size:22px;color:#595959}.legend strong{color:var(--dark)}.legend span{color:#74543f;font-size:14px}
-.activities{grid-template-columns:repeat(4,minmax(0,1fr))}.activity{border:1px solid var(--border);border-radius:18px;background:#fff;padding:18px;position:relative;overflow:hidden}.activity:before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--orange)}.activity .title{font-weight:900;color:var(--dark);min-height:42px}.activity .number{font-size:30px;font-weight:900;color:var(--orange);margin-top:10px}.activity .bar{height:10px;background:#f2e5d7;border-radius:999px;overflow:hidden;margin-top:10px}.activity .fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--yellow));border-radius:999px}.activity .caption{font-size:13px;color:#7b5e4a;margin-top:8px}
-.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:18px}table{width:100%;border-collapse:collapse;background:#fff;min-width:850px}th{background:var(--dark);color:#fff;text-align:left;font-size:13px;padding:13px 12px;position:sticky;top:0;z-index:1}td{padding:12px;border-bottom:1px solid #f0e3d8;font-size:13.5px}tbody tr:nth-child(even){background:#fffaf2}.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 10px;font-weight:800;font-size:12px;white-space:nowrap}.tag.ok{background:#e9f7ed;color:#2f7538}.tag.warn{background:#fff2d1;color:#8c5c00}.tag.no{background:#fff0eb;color:#9b3b20}.tag.neutral{background:#f1eee9;color:#614632}.footer{margin:18px 0 4px;color:#8b6f5e;font-size:12px;text-align:center}.small{font-size:12px;color:#7c5a45}
-@media(max-width:900px){.top-grid,.activities{grid-template-columns:1fr 1fr}.diag-grid{grid-template-columns:1fr}.section-title{align-items:flex-start;flex-direction:column}h1{font-size:28px}.wrapper{padding:14px}.hero-inner{padding:28px 20px}}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--light);padding-bottom:14px;margin-bottom:18px}
+.section-title h2{margin:0;color:var(--dark);font-size:24px}
+.pill{background:var(--yellow);color:var(--dark);border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px}
+.diag-grid{grid-template-columns:repeat(3,minmax(180px,240px));justify-content:center;align-items:stretch}
+.mini-card{border:1px solid var(--border);border-radius:18px;padding:18px;text-align:center;background:linear-gradient(180deg,#fff,#fffaf1)}
+.mini-card .value{font-size:32px;font-weight:900;color:var(--dark)}
+.mini-card .name{font-weight:900;color:#5d3c28}
+.mini-card.calificado{border-top:6px solid var(--green)}
+.mini-card.enviado{border-top:6px solid var(--orange)}
+.mini-card.pendiente{border-top:6px solid var(--red)}
+.activities{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.activity{border:1px solid var(--border);border-radius:18px;background:#fff;padding:18px;position:relative;overflow:hidden}
+.activity:before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--orange)}
+.activity .title{font-weight:900;color:var(--dark);min-height:42px}
+.activity .number{font-size:30px;font-weight:900;color:var(--orange);margin-top:10px}
+.activity .bar{height:10px;background:#f2e5d7;border-radius:999px;overflow:hidden;margin-top:10px}
+.activity .fill{height:100%;background:linear-gradient(90deg,var(--orange),var(--yellow));border-radius:999px}
+.activity .caption{font-size:13px;color:#7b5e4a;margin-top:8px}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:18px}
+table{width:100%;border-collapse:collapse;background:#fff;min-width:850px}
+th{background:var(--dark);color:#fff;text-align:left;font-size:13px;padding:13px 12px;position:sticky;top:0;z-index:1}
+td{padding:12px;border-bottom:1px solid #f0e3d8;font-size:13.5px}
+tbody tr:nth-child(even){background:#fffaf2}
+.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 10px;font-weight:800;font-size:12px;white-space:nowrap}
+.tag.ok{background:#e9f7ed;color:#2f7538}
+.tag.warn{background:#fff2d1;color:#8c5c00}
+.tag.no{background:#fff0eb;color:#9b3b20}
+.tag.neutral{background:#f1eee9;color:#614632}
+.footer{margin:18px 0 4px;color:#8b6f5e;font-size:12px;text-align:center}
+.small{font-size:12px;color:#7c5a45}
+@media(max-width:900px){.top-grid{grid-template-columns:1fr 1fr}.diag-grid{grid-template-columns:1fr}.section-title{align-items:flex-start;flex-direction:column}h1{font-size:28px}.wrapper{padding:14px}.hero-inner{padding:28px 20px}.actions{width:100%}.module-control{width:100%}.module-control select{width:100%}}
 @media(max-width:640px){.top-grid,.activities{grid-template-columns:1fr}.metric .num{font-size:32px}}
 </style>
 </head>
@@ -45,16 +87,23 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
     <div class="hero-inner">
       <div class="badge">Informe Diplomado Comprensión de lectura</div>
       <h1>Informe de avance – Diplomado en Comprensión de lectura</h1>
-      <p>Seguimiento actualizado de participación en actividades priorizadas. La información se consulta desde la hoja de cálculo fuente cada vez que se abre o se actualiza esta página.</p>
+      <p>Seguimiento actualizado de participación en actividades priorizadas. Selecciona el módulo para consultar la pestaña correspondiente del mismo documento fuente.</p>
     </div>
   </header>
 
   <div class="source-card">
     <div>
       <strong>Documento fuente en Google Drive</strong>
-      <span>La página toma los datos desde la hoja compartida. Para ver cambios recientes, actualiza la página o usa el botón.</span>
+      <span>La página toma los datos desde la hoja compartida. Puedes alternar entre MOD 1 y MOD 2 desde el filtro.</span>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div class="actions">
+      <div class="module-control">
+        <label for="moduleSelect">Ver módulo</label>
+        <select id="moduleSelect" aria-label="Seleccionar módulo del informe">
+          <option value="MOD 1">MOD 1</option>
+          <option value="MOD 2">MOD 2</option>
+        </select>
+      </div>
       <a class="btn secondary" href="https://docs.google.com/spreadsheets/d/1pnsegPrTsGUsWrluUI2r9ZFIFP2di8pWVwW8umBUCcI/edit?usp=sharing" target="_blank" rel="noopener">Abrir hoja fuente</a>
       <button class="btn" id="reloadBtn" type="button">Actualizar informe</button>
     </div>
@@ -63,19 +112,19 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
 
   <div class="grid top-grid" aria-label="Resumen general">
     <div class="metric"><div class="num" id="totalStudents">—</div><div class="label">Total estudiantes</div><div class="sub">Base de seguimiento activa</div></div>
-    <div class="metric"><div class="num" id="generalParticipationPct">—</div><div class="label">Participación general</div><div class="sub"><span id="generalParticipationCount">—</span> estudiantes con al menos una participación</div></div>
-    <div class="metric"><div class="num" id="diagnosticPct">—</div><div class="label">Avance en Diagnóstico</div><div class="sub"><span id="diagnosticParticipationCount">—</span> estudiantes con diagnóstico calificado</div></div>
+    <div class="metric"><div class="num" id="generalParticipationPct">—</div><div class="label">Participación general</div><div class="sub"><span id="generalParticipationCount">—</span> estudiantes con al menos un registro</div></div>
+    <div class="metric"><div class="num" id="mainActivityPct">—</div><div class="label" id="mainActivityMetricTitle">Avance en actividad principal</div><div class="sub"><span id="mainActivityCount">—</span> estudiantes calificados</div></div>
   </div>
 
   <section class="section">
     <div class="section-title">
-      <h2>Actividad propuesta importante: Diagnóstico</h2>
+      <h2 id="mainSectionTitle">Actividad propuesta importante</h2>
       <span class="pill">Seguimiento prioritario</span>
     </div>
     <div class="grid diag-grid">
-      <div class="mini-card calificado"><div class="value" id="diagCalificado">—</div><div class="name">Calificados</div></div>
-      <div class="mini-card enviado"><div class="value" id="diagEnviado">—</div><div class="name">Pendientes</div></div>
-      <div class="mini-card pendiente"><div class="value" id="diagPendiente">—</div><div class="name">Sin participación</div></div>
+      <div class="mini-card calificado"><div class="value" id="mainCalificado">—</div><div class="name">Calificados</div></div>
+      <div class="mini-card enviado"><div class="value" id="mainPendiente">—</div><div class="name">Pendientes</div></div>
+      <div class="mini-card pendiente"><div class="value" id="mainSinParticipacion">—</div><div class="name">Sin participación</div></div>
     </div>
   </section>
 
@@ -84,12 +133,7 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
       <h2>Avance de actividades priorizadas</h2>
       <span class="pill" id="lastUpdated">Actualización: —</span>
     </div>
-    <div class="grid activities">
-      <div class="activity"><div class="title">Diagnóstico</div><div class="number" id="actDiagnostico">—</div><div class="bar"><div class="fill" id="barDiagnostico" style="width:0%"></div></div><div class="caption" id="capDiagnostico">—</div></div>
-      <div class="activity"><div class="title">¿Qué modelo estás usando en tu aula?</div><div class="number" id="actModelo">—</div><div class="bar"><div class="fill" id="barModelo" style="width:0%"></div></div><div class="caption" id="capModelo">—</div></div>
-      <div class="activity"><div class="title">Mapa de prácticas letradas</div><div class="number" id="actMapa">—</div><div class="bar"><div class="fill" id="barMapa" style="width:0%"></div></div><div class="caption" id="capMapa">—</div></div>
-      <div class="activity"><div class="title">Iniciemos nuestro Diplomado en Comprensión de lectura conociéndonos</div><div class="number" id="actConociendonos">—</div><div class="bar"><div class="fill" id="barConociendonos" style="width:0%"></div></div><div class="caption" id="capConociendonos">—</div></div>
-    </div>
+    <div class="grid activities" id="activitiesGrid"></div>
   </section>
 
   <section class="section">
@@ -99,8 +143,8 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Estudiante</th><th>Diagnóstico</th><th>Modelo aula</th><th>Mapa prácticas</th><th>Conociéndonos</th><th>Participación general</th></tr></thead>
-        <tbody id="studentsBody"><tr><td colspan="6">Cargando…</td></tr></tbody>
+        <thead id="studentsHead"></thead>
+        <tbody id="studentsBody"><tr><td>Cargando…</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -110,9 +154,34 @@ h1{margin:18px 0 10px;color:#fff;font-size:34px;line-height:1.1}
 
 <script>
 const SHEET_ID = '1pnsegPrTsGUsWrluUI2r9ZFIFP2di8pWVwW8umBUCcI';
-const SHEET_NAME = 'MOD 1';
 const EXPECTED_TOTAL = 77;
+
+const MODULES = {
+  'MOD 1': {
+    sheet: 'MOD 1',
+    mainTitle: 'Diagnóstico',
+    columns: 5,
+    activities: [
+      { key:'diagnostico', label:'Diagnóstico', col:1 },
+      { key:'modelo', label:'¿Qué modelo estás usando en tu aula?', col:2 },
+      { key:'mapa', label:'Mapa de prácticas letradas', col:3 },
+      { key:'conociendonos', label:'Iniciemos nuestro Diplomado en Comprensión de lectura conociéndonos', col:4 }
+    ]
+  },
+  'MOD 2': {
+    sheet: 'MOD 2',
+    mainTitle: 'Prueba de entrada',
+    columns: 4,
+    activities: [
+      { key:'pruebaEntrada', label:'Prueba de entrada', col:1 },
+      { key:'foroLectura', label:'Foro: Lectura en voz alta y comprensión', col:2 },
+      { key:'entregaFinal', label:'Entrega final, final del módulo', col:3 }
+    ]
+  }
+};
+
 let currentScript = null;
+let selectedModule = 'MOD 1';
 
 function setStatus(message, kind=''){
   const el = document.getElementById('status');
@@ -168,7 +237,6 @@ function cleanStudentName(name){
   if(lower.includes('calificación final') || lower.includes('calificacion final')) return '';
 
   // En esta exportación los estudiantes vienen en formato: Apellido, Nombre.
-  // Este filtro evita contar filas técnicas de Brightspace o totales como estudiantes.
   if(!n.includes(',')) return '';
 
   return n;
@@ -184,7 +252,7 @@ function isGrade(value){
   if(!s) return false;
   if(isOnePending(s)) return false;
 
-  // Reconoce notas como: 15 / 15, 100% | 14 / 15, 93.33% | 4 / 5, 80% | 3 / 5, 60%
+  // Reconoce notas como: 15 / 15, 100% | 14 / 15, 93.33% | 4 / 5, 80% | 3 / 5, 60% | 5 / 5, 100%
   if(/\d+(?:[\.,]\d+)?\s*\/\s*\d+(?:[\.,]\d+)?/.test(s)) return true;
 
   // Reconoce porcentajes o notas numéricas distintas de 1, por si Google Sheets entrega solo el valor formateado.
@@ -198,16 +266,17 @@ function classifyCell(value){
   const s = normalize(value);
   const lower = s.toLowerCase();
 
+  // Regla solicitada: casilla vacía = sin participación.
   if(!s){
     return { text:'Sin participación', cls:'no', order:0 };
   }
 
-  // Regla solicitada: si aparece 1, queda como pendiente.
+  // Regla solicitada: si aparece 1 = pendiente.
   if(isOnePending(s)){
     return { text:'Pendiente', cls:'warn', order:1 };
   }
 
-  // Regla solicitada: si tiene nota, queda como calificado.
+  // Regla solicitada: si tiene nota = calificado.
   if(isGrade(s)){
     return { text:'Calificado', cls:'ok', order:2 };
   }
@@ -221,7 +290,7 @@ function classifyCell(value){
   return { text:'Pendiente', cls:'warn', order:1 };
 }
 
-function parseMod1(table){
+function parseModule(table, config){
   const rows = table.rows.map(r => (r.c || []).map(cellText));
   const students = [];
   const seen = new Set();
@@ -234,15 +303,14 @@ function parseMod1(table){
     if(seen.has(key)) return;
     seen.add(key);
 
-    const diagnostico = classifyCell(r[1]);
-    const modelo = classifyCell(r[2]);
-    const mapa = classifyCell(r[3]);
-    const conociendonos = classifyCell(r[4]);
+    const statuses = config.activities.map(activity => ({
+      key: activity.key,
+      label: activity.label,
+      status: classifyCell(r[activity.col])
+    }));
 
-    const statuses = [diagnostico, modelo, mapa, conociendonos];
-    const hasCalificado = statuses.some(s => s.text === 'Calificado');
-    const hasPendiente = statuses.some(s => s.text === 'Pendiente');
-    const hasAnyActivity = statuses.some(s => s.text !== 'Sin participación');
+    const hasCalificado = statuses.some(item => item.status.text === 'Calificado');
+    const hasPendiente = statuses.some(item => item.status.text === 'Pendiente');
 
     let generalText = 'Sin participación';
     let generalCls = 'no';
@@ -253,17 +321,11 @@ function parseMod1(table){
     } else if(hasPendiente){
       generalText = 'Pendiente';
       generalCls = 'warn';
-    } else if(hasAnyActivity){
-      generalText = 'Con participación';
-      generalCls = 'ok';
     }
 
     students.push({
       name,
-      diagnostico,
-      modelo,
-      mapa,
-      conociendonos,
+      statuses,
       generalText,
       generalCls
     });
@@ -272,16 +334,17 @@ function parseMod1(table){
   return students;
 }
 
-function countStatus(students, field, text){
-  return students.filter(s => s[field].text === text).length;
+function countStatus(students, activityIndex, text){
+  return students.filter(s => s.statuses[activityIndex] && s.statuses[activityIndex].status.text === text).length;
 }
 
-function render(students, sheetName){
+function render(students, moduleName){
+  const config = MODULES[moduleName];
   const total = students.length;
 
-  const diagCalificado = countStatus(students, 'diagnostico', 'Calificado');
-  const diagPendiente = countStatus(students, 'diagnostico', 'Pendiente');
-  const diagSinParticipacion = countStatus(students, 'diagnostico', 'Sin participación');
+  const mainCalificado = countStatus(students, 0, 'Calificado');
+  const mainPendiente = countStatus(students, 0, 'Pendiente');
+  const mainSinParticipacion = countStatus(students, 0, 'Sin participación');
 
   const generalConRegistro = students.filter(s => s.generalText !== 'Sin participación').length;
   const generalSinParticipacion = total - generalConRegistro;
@@ -290,39 +353,46 @@ function render(students, sheetName){
   document.getElementById('generalParticipationPct').textContent = percent(generalConRegistro,total) + '%';
   document.getElementById('generalParticipationCount').textContent = `${generalConRegistro} de ${total}`;
 
-  document.getElementById('diagnosticPct').textContent = percent(diagCalificado,total) + '%';
-  document.getElementById('diagnosticParticipationCount').textContent = `${diagCalificado} de ${total}`;
+  document.getElementById('mainActivityPct').textContent = percent(mainCalificado,total) + '%';
+  document.getElementById('mainActivityMetricTitle').textContent = 'Avance en ' + config.mainTitle;
+  document.getElementById('mainActivityCount').textContent = `${mainCalificado} de ${total}`;
 
-  document.getElementById('diagCalificado').textContent = diagCalificado;
-  document.getElementById('diagEnviado').textContent = diagPendiente;
-  document.getElementById('diagPendiente').textContent = diagSinParticipacion;
+  document.getElementById('mainSectionTitle').textContent = 'Actividad propuesta importante: ' + config.mainTitle;
+  document.getElementById('mainCalificado').textContent = mainCalificado;
+  document.getElementById('mainPendiente').textContent = mainPendiente;
+  document.getElementById('mainSinParticipacion').textContent = mainSinParticipacion;
 
-  const activities = [
-    ['Diagnostico', 'diagnostico'],
-    ['Modelo', 'modelo'],
-    ['Mapa', 'mapa'],
-    ['Conociendonos', 'conociendonos']
-  ];
-
-  activities.forEach(([id, field]) => {
-    const calificados = countStatus(students, field, 'Calificado');
-    const pendientes = countStatus(students, field, 'Pendiente');
-    const sin = countStatus(students, field, 'Sin participación');
+  const activitiesGrid = document.getElementById('activitiesGrid');
+  activitiesGrid.innerHTML = config.activities.map((activity, index) => {
+    const calificados = countStatus(students, index, 'Calificado');
+    const pendientes = countStatus(students, index, 'Pendiente');
+    const sin = countStatus(students, index, 'Sin participación');
     const pct = percent(calificados,total);
 
-    document.getElementById('act' + id).textContent = calificados;
-    document.getElementById('bar' + id).style.width = pct + '%';
-    document.getElementById('cap' + id).textContent = `${pct}% calificado (${calificados} de ${total}) · Pendientes: ${pendientes} · Sin participación: ${sin}`;
-  });
+    return `
+      <div class="activity">
+        <div class="title">${escapeHtml(activity.label)}</div>
+        <div class="number">${calificados}</div>
+        <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="caption">${pct}% calificado (${calificados} de ${total}) · Pendientes: ${pendientes} · Sin participación: ${sin}</div>
+      </div>
+    `;
+  }).join('');
+
+  const studentsHead = document.getElementById('studentsHead');
+  studentsHead.innerHTML = `
+    <tr>
+      <th>Estudiante</th>
+      ${config.activities.map(activity => `<th>${escapeHtml(activity.label)}</th>`).join('')}
+      <th>Participación general</th>
+    </tr>
+  `;
 
   const tbody = document.getElementById('studentsBody');
   tbody.innerHTML = students.map(s => `
     <tr>
       <td>${escapeHtml(s.name)}</td>
-      <td>${tag(s.diagnostico.text, s.diagnostico.cls)}</td>
-      <td>${tag(s.modelo.text, s.modelo.cls)}</td>
-      <td>${tag(s.mapa.text, s.mapa.cls)}</td>
-      <td>${tag(s.conociendonos.text, s.conociendonos.cls)}</td>
+      ${s.statuses.map(item => `<td>${tag(item.status.text, item.status.cls)}</td>`).join('')}
       <td>${tag(s.generalText, s.generalCls)}</td>
     </tr>
   `).join('');
@@ -335,37 +405,47 @@ function render(students, sheetName){
     : `Atención: se leyeron ${total} registros; el esperado es ${EXPECTED_TOTAL}. Revisa si hay filas adicionales o estudiantes sin coma en el nombre.`;
 
   setStatus(
-    `Informe actualizado correctamente desde la hoja “${sheetName}”. ${totalNote} Con registro: ${generalConRegistro}; sin participación general: ${generalSinParticipacion}.`,
-    total === EXPECTED_TOTAL ? 'ok' : 'error'
+    `Informe actualizado correctamente desde la hoja “${config.sheet}”. ${totalNote} Con registro: ${generalConRegistro}; sin participación general: ${generalSinParticipacion}.`,
+    total === EXPECTED_TOTAL ? 'ok' : 'warn'
   );
 }
 
 window.__handleSheet = function(response){
+  const config = MODULES[selectedModule];
+
   if(response && response.status === 'ok' && response.table){
-    const students = parseMod1(response.table);
+    const students = parseModule(response.table, config);
 
     if(students.length > 0){
-      render(students, SHEET_NAME);
+      render(students, selectedModule);
       return;
     }
   }
 
-  setStatus('No fue posible leer la hoja “MOD 1”. Revisa que el archivo esté publicado en la web y que la pestaña se llame exactamente MOD 1.', 'error');
-  document.getElementById('studentsBody').innerHTML = '<tr><td colspan="6">No se pudieron cargar los datos.</td></tr>';
+  setStatus(`No fue posible leer la hoja “${config.sheet}”. Revisa que el archivo esté publicado en la web y que la pestaña se llame exactamente ${config.sheet}.`, 'error');
+  document.getElementById('studentsBody').innerHTML = '<tr><td>No se pudieron cargar los datos.</td></tr>';
 };
+
+function columnLetters(total){
+  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+  return letters.slice(0, total).join(', ');
+}
 
 function loadSheet(){
   if(currentScript) currentScript.remove();
 
-  setStatus('Cargando datos desde la hoja “' + SHEET_NAME + '”…');
+  selectedModule = document.getElementById('moduleSelect').value;
+  const config = MODULES[selectedModule];
+
+  setStatus('Cargando datos desde la hoja “' + config.sheet + '”…');
 
   const script = document.createElement('script');
-  const query = encodeURIComponent('select A, B, C, D, E');
+  const query = encodeURIComponent('select ' + columnLetters(config.columns));
 
   script.src =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
     `?tqx=responseHandler:__handleSheet` +
-    `&sheet=${encodeURIComponent(SHEET_NAME)}` +
+    `&sheet=${encodeURIComponent(config.sheet)}` +
     `&headers=1` +
     `&tq=${query}` +
     `&t=${Date.now()}`;
@@ -378,6 +458,7 @@ function loadSheet(){
   document.body.appendChild(script);
 }
 
+document.getElementById('moduleSelect').addEventListener('change', loadSheet);
 document.getElementById('reloadBtn').addEventListener('click', loadSheet);
 loadSheet();
 </script>
