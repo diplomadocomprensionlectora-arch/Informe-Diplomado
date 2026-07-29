@@ -122,8 +122,8 @@ tbody tr:nth-child(even){background:#fffaf2}
       <span class="pill">Seguimiento prioritario</span>
     </div>
     <div class="grid diag-grid">
-      <div class="mini-card calificado"><div class="value" id="mainCalificado">—</div><div class="name">Calificados</div></div>
-      <div class="mini-card enviado"><div class="value" id="mainPendiente">—</div><div class="name">Pendientes</div></div>
+      <div class="mini-card calificado"><div class="value" id="mainCalificado">—</div><div class="name">Con calificación</div></div>
+      <div class="mini-card enviado"><div class="value" id="mainPendiente">—</div><div class="name">Con pendiente</div></div>
       <div class="mini-card pendiente"><div class="value" id="mainSinParticipacion">—</div><div class="name">Sin participación</div></div>
     </div>
   </section>
@@ -338,13 +338,30 @@ function countStatus(students, activityIndex, text){
   return students.filter(s => s.statuses[activityIndex] && s.statuses[activityIndex].status.text === text).length;
 }
 
+function countStudentsWithAnyStatus(students, text){
+  return students.filter(s =>
+    s.statuses.some(item => item.status.text === text)
+  ).length;
+}
+
+function countStudentsWithoutAnyActivity(students){
+  return students.filter(s =>
+    s.statuses.every(item => item.status.text === 'Sin participación')
+  ).length;
+}
+
 function render(students, moduleName){
   const config = MODULES[moduleName];
   const total = students.length;
 
-  const mainCalificado = countStatus(students, 0, 'Calificado');
-  const mainPendiente = countStatus(students, 0, 'Pendiente');
-  const mainSinParticipacion = countStatus(students, 0, 'Sin participación');
+  // Métrica de la actividad principal: se usa en la tarjeta superior de avance.
+  const mainActivityCalificado = countStatus(students, 0, 'Calificado');
+
+  // Resumen del módulo completo: revisa todas las actividades, no solo la primera columna.
+  // Así, si hay un "1" en Foro o Entrega final, se cuenta en "Con pendiente".
+  const mainCalificado = countStudentsWithAnyStatus(students, 'Calificado');
+  const mainPendiente = countStudentsWithAnyStatus(students, 'Pendiente');
+  const mainSinParticipacion = countStudentsWithoutAnyActivity(students);
 
   const generalConRegistro = students.filter(s => s.generalText !== 'Sin participación').length;
   const generalSinParticipacion = total - generalConRegistro;
@@ -353,11 +370,11 @@ function render(students, moduleName){
   document.getElementById('generalParticipationPct').textContent = percent(generalConRegistro,total) + '%';
   document.getElementById('generalParticipationCount').textContent = `${generalConRegistro} de ${total}`;
 
-  document.getElementById('mainActivityPct').textContent = percent(mainCalificado,total) + '%';
+  document.getElementById('mainActivityPct').textContent = percent(mainActivityCalificado,total) + '%';
   document.getElementById('mainActivityMetricTitle').textContent = 'Avance en ' + config.mainTitle;
-  document.getElementById('mainActivityCount').textContent = `${mainCalificado} de ${total}`;
+  document.getElementById('mainActivityCount').textContent = `${mainActivityCalificado} de ${total}`;
 
-  document.getElementById('mainSectionTitle').textContent = 'Actividad propuesta importante: ' + config.mainTitle;
+  document.getElementById('mainSectionTitle').textContent = 'Resumen de estado del ' + moduleName;
   document.getElementById('mainCalificado').textContent = mainCalificado;
   document.getElementById('mainPendiente').textContent = mainPendiente;
   document.getElementById('mainSinParticipacion').textContent = mainSinParticipacion;
@@ -405,7 +422,7 @@ function render(students, moduleName){
     : `Atención: se leyeron ${total} registros; el esperado es ${EXPECTED_TOTAL}. Revisa si hay filas adicionales o estudiantes sin coma en el nombre.`;
 
   setStatus(
-    `Informe actualizado correctamente desde la hoja “${config.sheet}”. ${totalNote} Con registro: ${generalConRegistro}; sin participación general: ${generalSinParticipacion}.`,
+    `Informe actualizado correctamente desde la hoja “${config.sheet}”. ${totalNote} Con registro: ${generalConRegistro}; con pendiente: ${mainPendiente}; sin participación general: ${generalSinParticipacion}.`,
     total === EXPECTED_TOTAL ? 'ok' : 'warn'
   );
 }
