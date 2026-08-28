@@ -94,7 +94,7 @@ tbody tr:nth-child(even){background:#fffaf2}
   <div class="source-card">
     <div>
       <strong>Documento fuente en Google Drive</strong>
-      <span>La página toma los datos desde la hoja compartida. Puedes alternar entre MOD 1 y MOD 2 desde el filtro.</span>
+      <span>La página toma los datos desde la hoja compartida. Puedes alternar entre MOD 1, MOD 2, MOD 3, MOD 4 y MOD 5 desde el filtro.</span>
     </div>
     <div class="actions">
       <div class="module-control">
@@ -102,6 +102,9 @@ tbody tr:nth-child(even){background:#fffaf2}
         <select id="moduleSelect" aria-label="Seleccionar módulo del informe">
           <option value="MOD 1">MOD 1</option>
           <option value="MOD 2">MOD 2</option>
+          <option value="MOD 3">MOD 3</option>
+          <option value="MOD 4">MOD 4</option>
+          <option value="MOD 5">MOD 5</option>
         </select>
       </div>
       <a class="btn secondary" href="https://docs.google.com/spreadsheets/d/1pnsegPrTsGUsWrluUI2r9ZFIFP2di8pWVwW8umBUCcI/edit?usp=sharing" target="_blank" rel="noopener">Abrir hoja fuente</a>
@@ -111,20 +114,41 @@ tbody tr:nth-child(even){background:#fffaf2}
   <div id="status" class="status">Cargando datos desde Google Sheets…</div>
 
   <div class="grid top-grid" aria-label="Resumen general">
-    <div class="metric"><div class="num" id="totalStudents">—</div><div class="label">Total estudiantes</div><div class="sub">Base de seguimiento activa</div></div>
-    <div class="metric"><div class="num" id="generalParticipationPct">—</div><div class="label">Participación general</div><div class="sub"><span id="generalParticipationCount">—</span> estudiantes con al menos un registro</div></div>
-    <div class="metric"><div class="num" id="mainActivityPct">—</div><div class="label" id="mainActivityMetricTitle">Avance en actividad principal</div><div class="sub"><span id="mainActivityCount">—</span> estudiantes calificados</div></div>
+    <div class="metric">
+      <div class="num" id="totalStudents">—</div>
+      <div class="label">Total estudiantes</div>
+      <div class="sub">Base de seguimiento activa</div>
+    </div>
+    <div class="metric">
+      <div class="num" id="generalParticipationPct">—</div>
+      <div class="label">Participación general</div>
+      <div class="sub"><span id="generalParticipationCount">—</span> estudiantes con al menos un registro</div>
+    </div>
+    <div class="metric">
+      <div class="num" id="mainActivityPct">—</div>
+      <div class="label" id="mainActivityMetricTitle">Avance en actividad principal</div>
+      <div class="sub"><span id="mainActivityCount">—</span> estudiantes calificados</div>
+    </div>
   </div>
 
   <section class="section">
     <div class="section-title">
-      <h2 id="mainSectionTitle">Actividad propuesta importante</h2>
+      <h2 id="mainSectionTitle">Resumen de estado del módulo</h2>
       <span class="pill">Seguimiento prioritario</span>
     </div>
     <div class="grid diag-grid">
-      <div class="mini-card calificado"><div class="value" id="mainCalificado">—</div><div class="name">Con calificación</div></div>
-      <div class="mini-card enviado"><div class="value" id="mainPendiente">—</div><div class="name">Con pendiente</div></div>
-      <div class="mini-card pendiente"><div class="value" id="mainSinParticipacion">—</div><div class="name">Sin participación</div></div>
+      <div class="mini-card calificado">
+        <div class="value" id="mainCalificado">—</div>
+        <div class="name">Con calificación</div>
+      </div>
+      <div class="mini-card enviado">
+        <div class="value" id="mainPendiente">—</div>
+        <div class="name">Pendiente por calificar</div>
+      </div>
+      <div class="mini-card pendiente">
+        <div class="value" id="mainSinParticipacion">—</div>
+        <div class="name">Sin participación</div>
+      </div>
     </div>
   </section>
 
@@ -157,27 +181,11 @@ const SHEET_ID = '1pnsegPrTsGUsWrluUI2r9ZFIFP2di8pWVwW8umBUCcI';
 const EXPECTED_TOTAL = 77;
 
 const MODULES = {
-  'MOD 1': {
-    sheet: 'MOD 1',
-    mainTitle: 'Diagnóstico',
-    columns: 5,
-    activities: [
-      { key:'diagnostico', label:'Diagnóstico', col:1 },
-      { key:'modelo', label:'¿Qué modelo estás usando en tu aula?', col:2 },
-      { key:'mapa', label:'Mapa de prácticas letradas', col:3 },
-      { key:'conociendonos', label:'Iniciemos nuestro Diplomado en Comprensión de lectura conociéndonos', col:4 }
-    ]
-  },
-  'MOD 2': {
-    sheet: 'MOD 2',
-    mainTitle: 'Prueba de entrada',
-    columns: 4,
-    activities: [
-      { key:'pruebaEntrada', label:'Prueba de entrada', col:1 },
-      { key:'foroLectura', label:'Foro: Lectura en voz alta y comprensión', col:2 },
-      { key:'entregaFinal', label:'Entrega final, final del módulo', col:3 }
-    ]
-  }
+  'MOD 1': { sheet:'MOD 1', expected:77 },
+  'MOD 2': { sheet:'MOD 2', expected:77 },
+  'MOD 3': { sheet:'MOD 3', expected:77 },
+  'MOD 4': { sheet:'MOD 4', expected:77 },
+  'MOD 5': { sheet:'MOD 5', expected:77 }
 };
 
 let currentScript = null;
@@ -236,7 +244,8 @@ function cleanStudentName(name){
   if(lower.startsWith('mínimo') || lower.startsWith('minimo')) return '';
   if(lower.includes('calificación final') || lower.includes('calificacion final')) return '';
 
-  // En esta exportación los estudiantes vienen en formato: Apellido, Nombre.
+  // En la exportación de Brightspace los estudiantes vienen en formato: Apellido, Nombre.
+  // Este filtro evita contar encabezados, totales o filas técnicas como estudiantes.
   if(!n.includes(',')) return '';
 
   return n;
@@ -252,10 +261,10 @@ function isGrade(value){
   if(!s) return false;
   if(isOnePending(s)) return false;
 
-  // Reconoce notas como: 15 / 15, 100% | 14 / 15, 93.33% | 4 / 5, 80% | 3 / 5, 60% | 5 / 5, 100%
+  // Reconoce notas como: 15 / 15, 100% | 4 / 5, 80% | 5 / 5, 100%
   if(/\d+(?:[\.,]\d+)?\s*\/\s*\d+(?:[\.,]\d+)?/.test(s)) return true;
 
-  // Reconoce porcentajes o notas numéricas distintas de 1, por si Google Sheets entrega solo el valor formateado.
+  // Reconoce porcentajes o notas numéricas distintas de 1.
   if(/^\d+(?:[\.,]\d+)?\s*%$/.test(s)) return true;
 
   const n = Number(s.replace(',', '.'));
@@ -271,9 +280,9 @@ function classifyCell(value){
     return { text:'Sin participación', cls:'no', order:0 };
   }
 
-  // Regla solicitada: si aparece 1 = pendiente.
+  // Regla solicitada: si aparece 1 = pendiente por calificar.
   if(isOnePending(s)){
-    return { text:'Pendiente', cls:'warn', order:1 };
+    return { text:'Pendiente por calificar', cls:'warn', order:1 };
   }
 
   // Regla solicitada: si tiene nota = calificado.
@@ -283,15 +292,45 @@ function classifyCell(value){
 
   // Marcadores antiguos de entrega sin calificar: se mantienen como pendiente.
   if(lower.includes('javascript:void') || lower.includes('#value') || lower.includes('particip') || lower.includes('enviado')){
-    return { text:'Pendiente', cls:'warn', order:1 };
+    return { text:'Pendiente por calificar', cls:'warn', order:1 };
   }
 
   // Cualquier contenido no vacío que no sea nota se marca como pendiente para no contarlo como calificado por error.
-  return { text:'Pendiente', cls:'warn', order:1 };
+  return { text:'Pendiente por calificar', cls:'warn', order:1 };
 }
 
-function parseModule(table, config){
+function getColumnLabel(table, index){
+  const label = table.cols && table.cols[index] ? normalize(table.cols[index].label) : '';
+  return label || `Actividad ${index}`;
+}
+
+function getActivityColumns(table, rows){
+  const activities = [];
+  const totalCols = Math.max(
+    table.cols ? table.cols.length : 0,
+    ...rows.map(r => r.length)
+  );
+
+  for(let col = 1; col < totalCols; col++){
+    const label = getColumnLabel(table, col);
+    const hasLabel = !!normalize(label) && !/^actividad\s+\d+$/i.test(label);
+    const hasData = rows.some(r => normalize(r[col]));
+
+    if(hasLabel || hasData){
+      activities.push({
+        key: 'activity_' + col,
+        label: label,
+        col: col
+      });
+    }
+  }
+
+  return activities;
+}
+
+function parseModule(table){
   const rows = table.rows.map(r => (r.c || []).map(cellText));
+  const activities = getActivityColumns(table, rows);
   const students = [];
   const seen = new Set();
 
@@ -303,14 +342,14 @@ function parseModule(table, config){
     if(seen.has(key)) return;
     seen.add(key);
 
-    const statuses = config.activities.map(activity => ({
+    const statuses = activities.map(activity => ({
       key: activity.key,
       label: activity.label,
       status: classifyCell(r[activity.col])
     }));
 
     const hasCalificado = statuses.some(item => item.status.text === 'Calificado');
-    const hasPendiente = statuses.some(item => item.status.text === 'Pendiente');
+    const hasPendiente = statuses.some(item => item.status.text === 'Pendiente por calificar');
 
     let generalText = 'Sin participación';
     let generalCls = 'no';
@@ -319,7 +358,7 @@ function parseModule(table, config){
       generalText = 'Con calificación';
       generalCls = 'ok';
     } else if(hasPendiente){
-      generalText = 'Pendiente';
+      generalText = 'Pendiente por calificar';
       generalCls = 'warn';
     }
 
@@ -331,7 +370,7 @@ function parseModule(table, config){
     });
   });
 
-  return students;
+  return { students, activities };
 }
 
 function countStatus(students, activityIndex, text){
@@ -350,17 +389,18 @@ function countStudentsWithoutAnyActivity(students){
   ).length;
 }
 
-function render(students, moduleName){
+function render(parsed, moduleName){
   const config = MODULES[moduleName];
+  const students = parsed.students;
+  const activities = parsed.activities;
   const total = students.length;
+  const mainActivityTitle = activities.length ? activities[0].label : 'actividad principal';
 
-  // Métrica de la actividad principal: se usa en la tarjeta superior de avance.
-  const mainActivityCalificado = countStatus(students, 0, 'Calificado');
+  const mainActivityCalificado = activities.length ? countStatus(students, 0, 'Calificado') : 0;
 
-  // Resumen del módulo completo: revisa todas las actividades, no solo la primera columna.
-  // Así, si hay un "1" en Foro o Entrega final, se cuenta en "Con pendiente".
+  // Resumen completo del módulo: revisa todas las actividades, no solo la primera columna.
   const mainCalificado = countStudentsWithAnyStatus(students, 'Calificado');
-  const mainPendiente = countStudentsWithAnyStatus(students, 'Pendiente');
+  const mainPendiente = countStudentsWithAnyStatus(students, 'Pendiente por calificar');
   const mainSinParticipacion = countStudentsWithoutAnyActivity(students);
 
   const generalConRegistro = students.filter(s => s.generalText !== 'Sin participación').length;
@@ -371,7 +411,7 @@ function render(students, moduleName){
   document.getElementById('generalParticipationCount').textContent = `${generalConRegistro} de ${total}`;
 
   document.getElementById('mainActivityPct').textContent = percent(mainActivityCalificado,total) + '%';
-  document.getElementById('mainActivityMetricTitle').textContent = 'Avance en ' + config.mainTitle;
+  document.getElementById('mainActivityMetricTitle').textContent = 'Avance en ' + mainActivityTitle;
   document.getElementById('mainActivityCount').textContent = `${mainActivityCalificado} de ${total}`;
 
   document.getElementById('mainSectionTitle').textContent = 'Resumen de estado del ' + moduleName;
@@ -380,27 +420,32 @@ function render(students, moduleName){
   document.getElementById('mainSinParticipacion').textContent = mainSinParticipacion;
 
   const activitiesGrid = document.getElementById('activitiesGrid');
-  activitiesGrid.innerHTML = config.activities.map((activity, index) => {
-    const calificados = countStatus(students, index, 'Calificado');
-    const pendientes = countStatus(students, index, 'Pendiente');
-    const sin = countStatus(students, index, 'Sin participación');
-    const pct = percent(calificados,total);
 
-    return `
-      <div class="activity">
-        <div class="title">${escapeHtml(activity.label)}</div>
-        <div class="number">${calificados}</div>
-        <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
-        <div class="caption">${pct}% calificado (${calificados} de ${total}) · Pendientes: ${pendientes} · Sin participación: ${sin}</div>
-      </div>
-    `;
-  }).join('');
+  if(!activities.length){
+    activitiesGrid.innerHTML = '<div class="activity"><div class="title">Sin actividades detectadas</div><div class="caption">Revisa que la hoja tenga encabezados desde la columna B.</div></div>';
+  } else {
+    activitiesGrid.innerHTML = activities.map((activity, index) => {
+      const calificados = countStatus(students, index, 'Calificado');
+      const pendientes = countStatus(students, index, 'Pendiente por calificar');
+      const sin = countStatus(students, index, 'Sin participación');
+      const pct = percent(calificados,total);
+
+      return `
+        <div class="activity">
+          <div class="title">${escapeHtml(activity.label)}</div>
+          <div class="number">${calificados}</div>
+          <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+          <div class="caption">${pct}% calificado (${calificados} de ${total}) · Pendientes por calificar: ${pendientes} · Sin participación: ${sin}</div>
+        </div>
+      `;
+    }).join('');
+  }
 
   const studentsHead = document.getElementById('studentsHead');
   studentsHead.innerHTML = `
     <tr>
       <th>Estudiante</th>
-      ${config.activities.map(activity => `<th>${escapeHtml(activity.label)}</th>`).join('')}
+      ${activities.map(activity => `<th>${escapeHtml(activity.label)}</th>`).join('')}
       <th>Participación general</th>
     </tr>
   `;
@@ -417,13 +462,14 @@ function render(students, moduleName){
   const now = new Date();
   document.getElementById('lastUpdated').textContent = 'Actualización: ' + now.toLocaleString('es-CO');
 
-  const totalNote = total === EXPECTED_TOTAL
+  const expected = config.expected || EXPECTED_TOTAL;
+  const totalNote = total === expected
     ? `Total validado: ${total} estudiantes.`
-    : `Atención: se leyeron ${total} registros; el esperado es ${EXPECTED_TOTAL}. Revisa si hay filas adicionales o estudiantes sin coma en el nombre.`;
+    : `Atención: se leyeron ${total} registros; el esperado es ${expected}. Revisa si hay filas adicionales, duplicados o estudiantes sin coma en el nombre.`;
 
   setStatus(
-    `Informe actualizado correctamente desde la hoja “${config.sheet}”. ${totalNote} Con registro: ${generalConRegistro}; con pendiente: ${mainPendiente}; sin participación general: ${generalSinParticipacion}.`,
-    total === EXPECTED_TOTAL ? 'ok' : 'warn'
+    `Informe actualizado correctamente desde la hoja “${config.sheet}”. ${totalNote} Con registro: ${generalConRegistro}; pendiente por calificar: ${mainPendiente}; sin participación general: ${generalSinParticipacion}.`,
+    total === expected ? 'ok' : 'warn'
   );
 }
 
@@ -431,21 +477,17 @@ window.__handleSheet = function(response){
   const config = MODULES[selectedModule];
 
   if(response && response.status === 'ok' && response.table){
-    const students = parseModule(response.table, config);
+    const parsed = parseModule(response.table);
 
-    if(students.length > 0){
-      render(students, selectedModule);
+    if(parsed.students.length > 0){
+      render(parsed, selectedModule);
       return;
     }
   }
 
   setStatus(`No fue posible leer la hoja “${config.sheet}”. Revisa que el archivo esté publicado en la web y que la pestaña se llame exactamente ${config.sheet}.`, 'error');
+  document.getElementById('studentsHead').innerHTML = '<tr><th>Estudiante</th></tr>';
   document.getElementById('studentsBody').innerHTML = '<tr><td>No se pudieron cargar los datos.</td></tr>';
-};
-
-function columnLetters(total){
-  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-  return letters.slice(0, total).join(', ');
 }
 
 function loadSheet(){
@@ -457,7 +499,7 @@ function loadSheet(){
   setStatus('Cargando datos desde la hoja “' + config.sheet + '”…');
 
   const script = document.createElement('script');
-  const query = encodeURIComponent('select ' + columnLetters(config.columns));
+  const query = encodeURIComponent('select *');
 
   script.src =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
